@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // Create downloads folder
-const downloadsDir = path.join(__dirname, 'downloads');
+const downloadsDir = '/tmp/downloads';
 if (!fs.existsSync(downloadsDir)) {
     fs.mkdirSync(downloadsDir);
 }
@@ -28,12 +28,11 @@ app.post("/download", (req, res) => {
     const timestamp = Date.now();
     const output = path.join(downloadsDir, `video_${timestamp}.%(ext)s`);
 
-    // Better command for YouTube
-    const command = `yt-dlp -f "best[height<=1080]" --no-playlist -o "${output}" "${url}"`;
+    const args = ['-f', 'best[height<=1080]', '--no-playlist', '-o', output, url];
 
     console.log("Downloading:", url);
 
-    exec(command, (error, stdout, stderr) => {
+    execFile('yt-dlp', args, (error, stdout, stderr) => {
         if (error) {
             console.error("Error:", stderr);
             return res.status(500).json({ error: "Download failed. Make sure the video is public." });
